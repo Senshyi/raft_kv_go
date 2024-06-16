@@ -16,3 +16,5 @@ shared? - kv and scheduler will most likely share some stuff :?
 resources:
 
 https://grpc.io/
+https://raft.github.io/
+https://raft.github.io/raft.pdf (holy grail)
