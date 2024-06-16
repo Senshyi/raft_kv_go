@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package kvpb;
+
+option go_package = "./proto";
+
+service Kv {
+  rpc KvGet(None) returns (GetResponse);
+}
+
+message None {}
+
+message GetResponse {
+  string msg = 1;
+}

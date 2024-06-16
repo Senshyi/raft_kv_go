@@ -11,3 +11,8 @@ kv - holds grpc server
 proto - all the nice proto stuff ;)
 scheduler - this will schedul stuff, not sure if I'll keep it separate
 shared? - kv and scheduler will most likely share some stuff :?
+
+
+resources:
+
+https://grpc.io/
