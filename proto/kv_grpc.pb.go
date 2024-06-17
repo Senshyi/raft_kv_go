@@ -19,14 +19,18 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	Kv_KvGet_FullMethodName = "/kvpb.Kv/KvGet"
+	Kv_Get_FullMethodName  = "/kvpb.Kv/Get"
+	Kv_Set_FullMethodName  = "/kvpb.Kv/Set"
+	Kv_Scan_FullMethodName = "/kvpb.Kv/Scan"
 )
 
 // KvClient is the client API for Kv service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type KvClient interface {
-	KvGet(ctx context.Context, in *None, opts ...grpc.CallOption) (*GetResponse, error)
+	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
+	Set(ctx context.Context, in *PutRequest, opts ...grpc.CallOption) (*PutResponse, error)
+	Scan(ctx context.Context, in *ScanRequest, opts ...grpc.CallOption) (*ScanResponse, error)
 }
 
 type kvClient struct {
@@ -37,10 +41,30 @@ func NewKvClient(cc grpc.ClientConnInterface) KvClient {
 	return &kvClient{cc}
 }
 
-func (c *kvClient) KvGet(ctx context.Context, in *None, opts ...grpc.CallOption) (*GetResponse, error) {
+func (c *kvClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetResponse)
-	err := c.cc.Invoke(ctx, Kv_KvGet_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, Kv_Get_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kvClient) Set(ctx context.Context, in *PutRequest, opts ...grpc.CallOption) (*PutResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PutResponse)
+	err := c.cc.Invoke(ctx, Kv_Set_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kvClient) Scan(ctx context.Context, in *ScanRequest, opts ...grpc.CallOption) (*ScanResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ScanResponse)
+	err := c.cc.Invoke(ctx, Kv_Scan_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +75,9 @@ func (c *kvClient) KvGet(ctx context.Context, in *None, opts ...grpc.CallOption)
 // All implementations must embed UnimplementedKvServer
 // for forward compatibility
 type KvServer interface {
-	KvGet(context.Context, *None) (*GetResponse, error)
+	Get(context.Context, *GetRequest) (*GetResponse, error)
+	Set(context.Context, *PutRequest) (*PutResponse, error)
+	Scan(context.Context, *ScanRequest) (*ScanResponse, error)
 	mustEmbedUnimplementedKvServer()
 }
 
@@ -59,8 +85,14 @@ type KvServer interface {
 type UnimplementedKvServer struct {
 }
 
-func (UnimplementedKvServer) KvGet(context.Context, *None) (*GetResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method KvGet not implemented")
+func (UnimplementedKvServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+}
+func (UnimplementedKvServer) Set(context.Context, *PutRequest) (*PutResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Set not implemented")
+}
+func (UnimplementedKvServer) Scan(context.Context, *ScanRequest) (*ScanResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Scan not implemented")
 }
 func (UnimplementedKvServer) mustEmbedUnimplementedKvServer() {}
 
@@ -75,20 +107,56 @@ func RegisterKvServer(s grpc.ServiceRegistrar, srv KvServer) {
 	s.RegisterService(&Kv_ServiceDesc, srv)
 }
 
-func _Kv_KvGet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(None)
+func _Kv_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(KvServer).KvGet(ctx, in)
+		return srv.(KvServer).Get(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Kv_KvGet_FullMethodName,
+		FullMethod: Kv_Get_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(KvServer).KvGet(ctx, req.(*None))
+		return srv.(KvServer).Get(ctx, req.(*GetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Kv_Set_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PutRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KvServer).Set(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Kv_Set_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KvServer).Set(ctx, req.(*PutRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Kv_Scan_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ScanRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KvServer).Scan(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Kv_Scan_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KvServer).Scan(ctx, req.(*ScanRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -101,8 +169,16 @@ var Kv_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*KvServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "KvGet",
-			Handler:    _Kv_KvGet_Handler,
+			MethodName: "Get",
+			Handler:    _Kv_Get_Handler,
+		},
+		{
+			MethodName: "Set",
+			Handler:    _Kv_Set_Handler,
+		},
+		{
+			MethodName: "Scan",
+			Handler:    _Kv_Scan_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
